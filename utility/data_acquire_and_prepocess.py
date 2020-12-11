@@ -17,10 +17,10 @@ def download_images(src="https://www.gettyimages.com/photos/office-workers-weari
 
     for img in imgs:
         try:
-          # print(img["src"])
-          imgs_urls.append(img["src"]) # extracting the urls, avoiding encountering images without src's
+            # print(img["src"])
+            imgs_urls.append(img["src"]) # extracting the urls, avoiding encountering images without src's
         except Exception as e:
-          pass
+            pass
 
     return imgs_urls
 
@@ -39,7 +39,8 @@ def read_and_download(url, img_num, filename="./mask_images/"):
         img.save(path)
     except Exception as e:
         print(e)
-
+        
+            
 def run_image_downloader():
     # # store the urls into a .txt file
     # # once the file is written, please comment this part and uncomment "read the urls..." part and run it separately
@@ -67,35 +68,34 @@ def run_image_downloader():
     with open("./masked_imgs_urls.txt", "r") as rf:
         ind = 1
         url = rf.readline().strip()
-    while len(url) > 0:
-        # print(f"current url: {url}")
-        if ind % 10 == 0:
-            print(f"current ind: {ind}")
+        while len(url) > 0:
+            # print(f"current url: {url}")
+            if ind % 10 == 0:
+                print(f"current ind: {ind}")
 
-        read_and_download(url, ind)
-        ind += 1
+            read_and_download(url, ind)
+            ind += 1
 
-    url = rf.readline().strip()
-
+            url = rf.readline().strip()
 
 def read_and_ravel_imgs(max_num_imgs=480, src="./lfw", tgt="./face_images"):
-  pattern = r".*\.jpg"
-  ind = 1
-  break_flag = False
-  for root, dirs, files in os.walk(src):
-      if break_flag:
-          break
+    pattern = r".*\.jpg"
+    ind = 1
+    break_flag = False
+    for root, dirs, files in os.walk(src):
+        if break_flag:
+            break
 
-      for filename in files:
-          matched = re.match(pattern, filename)
-          if bool(matched):
-              image = Image.open(os.path.join(root, filename))
-              image.save(os.path.join(tgt, f"img_{ind}.png"))
-              ind += 1
-              if ind % 10 == 0:
-                  print(f"current ind: {ind}")
-              if ind > max_num_imgs:
-                  break_flag = True
-                  break
-          break # only stores one image for one person
-          
+        for filename in files:
+            matched = re.match(pattern, filename)
+            if bool(matched):
+                image = Image.open(os.path.join(root, filename))
+                image.save(os.path.join(tgt, f"img_{ind}.png"))
+                ind += 1
+                if ind % 10 == 0:
+                    print(f"current ind: {ind}")
+                if ind > max_num_imgs:
+                    break_flag = True
+                    break
+            break # only stores one image for one person
+            
