@@ -78,6 +78,7 @@ def run_image_downloader():
 
             url = rf.readline().strip()
 
+
 def read_and_ravel_imgs(max_num_imgs=480, src="./lfw", tgt="./face_images"):
     pattern = r".*\.jpg"
     ind = 1
