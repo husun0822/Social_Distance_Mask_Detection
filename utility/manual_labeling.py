@@ -123,4 +123,3 @@ if __name__ == "__main__":
                 except Exception as e:
                     with open("outliers.txt", "a") as wf:
                         wf.write(f"{file}\n")
-
