@@ -11,5 +11,5 @@
 *The models are defined [here](https://github.com/husun0822/Social_Distance_Mask_Detection/blob/main/models/models_and_datasets.py)*
 
 * [Mask-RCNN](https://drive.google.com/file/d/1-6q0OcEfnkXU1zx5_DS25vR1pk9XauCG/view?usp=sharing)
-* [CNN Regressor]
-* [Mask Classifier(**Please fill in the link**)](https://github.com/husun0822/Social_Distance_Mask_Detection)
+* [CNN Regressor](https://drive.google.com/file/d/1-XPlkknOdGJEtWK2-r--jfDbD2-PzhZT/view?usp=sharing)
+* [Mask Classifier(**Please fill in the link**)]()
