@@ -13,4 +13,5 @@
 
 * [Mask-RCNN](https://drive.google.com/file/d/1-6q0OcEfnkXU1zx5_DS25vR1pk9XauCG/view?usp=sharing)
 * [CNN Regressor](https://drive.google.com/file/d/1-XPlkknOdGJEtWK2-r--jfDbD2-PzhZT/view?usp=sharing)
-* [Mask Classifier (**Please fill in the link**)]
+* [Mask Classifier, high-resolution](https://drive.google.com/file/d/1MTcyh-5TXZtfP9JYA1S9jKcyBOo8bdgx/view?usp=sharing)
+* [Mask Classifier, low-resolution](https://drive.google.com/file/d/1TTpMUQgpgjqHGOSLCow0of_EHxNPHAAM/view?usp=sharing)
