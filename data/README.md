@@ -6,6 +6,7 @@
 * [Human instance and face with location of chin annotated](https://drive.google.com/file/d/1Rnt3YWavImTdzazRy6mi1lzf_PJjtm1C/view?usp=sharing)
 * [Maksed and unmasked faces dataset No.2 augmented with scaling](https://drive.google.com/file/d/17APGRS2NJgxiOsVM79jzu3Q3K5nJ7cmV/view?usp=sharing)
 * [Test masked and unmasked faces extracted from video](https://drive.google.com/file/d/1O6z-x6XJw2iWYqHD-pscIPRPjz0JrlzQ/view?usp=sharing)
+* [A summary augmented masked and unmasked faces dataset, with 30k+ samples](https://drive.google.com/file/d/1Jh68rJN65K_QsO9Af9qB9dzYA9Ji5PaT/view?usp=sharing)
 
 ## Model Weights
 *The models are defined [here](https://github.com/husun0822/Social_Distance_Mask_Detection/blob/main/models/models_and_datasets.py)*
