@@ -232,11 +232,20 @@ class Person(object):
       return out_size
 
     if min(face_slice.shape[:2]) < 40:
-      out_size = 4*argmin_dist(face_slice.shape[:2])
-      model_mask = self.model_mask[1]
+     out_size = 4*argmin_dist(face_slice.shape[:2])
+     model_mask = self.model_mask[1] # use small face model
     else:
-      out_size = argmin_dist(face_slice.shape[:2])
-      model_mask = self.model_mask[0]
+     out_size = argmin_dist(face_slice.shape[:2])
+     model_mask = self.model_mask[0] # use big face model
+
+    # out_size = argmin_dist(face_slice.shape[:2])
+    # if out_size==14 or out_size==28:
+    #   # model_mask = self.model_mask[1] # use small face model
+    #   out_size = 4*out_size
+    # else:
+    #   # model_mask = self.model_mask[0] # use large face model
+    #   out_size = out_size
+    # model_mask = self.model_mask[0] # use large face model only
 
     transformations = T.Compose([
       T.ToPILImage(),
@@ -300,7 +309,7 @@ class Frame(object):
       num_people = scores.shape[0]
       people = []
       for i in range(num_people):
-        person = Person(boxes[i], masks[i, 0], img, scores[i], self.label, model_face,frame_orig=self.frame_orig)
+        person = Person(boxes[i], masks[i, 0], img, scores[i], self.label, model_face, frame_orig=self.frame_orig)
         # if person.prob is not None:
         people.append(person)
           # person.detect_face()
@@ -316,6 +325,17 @@ class Frame(object):
       # plt.imshow(img_c)
       # plt.show() 
 
+      #find max box of the people
+      max_box = 0
+      for person in self.people:
+        box = person.box.astype(np.int)
+        if(box[3]-box[1]>max_box):
+          max_box = box[3]-box[1]
+
+      # measure people distance
+      people_real_dis = self.get_people_distance() 
+      k = 0
+
       for person in self.people:
         # draw on the frame
 
@@ -327,6 +347,19 @@ class Frame(object):
         #                   (box[0], box[1]), cv.FONT_HERSHEY_SIMPLEX, 0.3, 
         #                   color=(0, 255, 0), thickness=2, lineType=cv.LINE_AA)
         people_size = abs(box[2]-box[0])*abs(box[3]-box[1])
+
+        ## draw the circle on the image
+        H = np.array([[ 5.35371621e-02, -4.30821635e-01,  3.25425811e+02],
+              [-2.59824540e-01, -2.35951346e-01,  4.67802688e+02],
+              [-5.96944809e-04, -6.15687486e-04,  1.00000000e+00]])
+        
+        person_scale_factor = 1.0
+        radius = 200
+        person_scale = (box[3]-box[1])*person_scale_factor/ max_box
+        person_real_dis = people_real_dis[k,:]
+        k+=1
+        img_c = draw_circle(img_c,person,person_scale,H,np.array([477,265]),radius,person_real_dis) # draw circle on the frame
+
 
         if person.face_loc_slice is not None:
           # print(f"{person.face_loc_slice}, {person.face_loc}")
@@ -358,10 +391,39 @@ class Frame(object):
           # img_c = cv.UMat.get(img_c)
           self.mask_score.append(wearing_mask_prob)
           self.face_proportion.append(face_proportion)
+
+        
         
       if if_plot:
         plt.imshow(img_c)
         plt.show()
 
       return (img_c / 255).astype(np.float32)
+  def get_people_distance(self):
       
+      """
+        output:
+          adjacent matrix of distance in bird-view plane(real)
+      """
+      num_people = len(self.people)
+      people_real_dis = np.zeros((num_people,num_people))
+      H_prime = np.array([[-5.02078525e-01, -2.19026056e+00,  1.17121129e+03],
+                [ 2.38594728e-01, -2.50882573e+00,  1.08701675e+03],
+                [-8.88316345e-05, -2.54869230e-03,  1.00000000e+00]])
+      people_pos = np.zeros((3,num_people))
+      i = 0
+      for person in self.people:
+        people_pos[0,i] = person.pos[0]
+        people_pos[1,i] = person.pos[1]
+        people_pos[2,i] = 1.0
+        i += 1
+      people_real_pos = H_prime @ people_pos
+      people_real_pos /= people_real_pos[2,:]
+
+      for p in range(num_people):
+        for q in range(num_people):
+          people_real_dis[p,q] = sqrt(pow(people_pos[0,p]-people_pos[0,q],2)+pow(people_pos[1,p]-people_pos[1,q],2))
+          #people_real_dis[p,q] = sqrt(pow(people_real_pos[0,p]-people_real_pos[0,q],2)+pow(people_real_pos[1,p]-people_real_pos[1,q],2))
+
+      return people_real_dis
+    
