@@ -1,4 +1,4 @@
-# This file contains links to all datasets we've used and trained model weights.
+# Links to all datasets we've used and trained model weights.
 
 ## Datasets
 * [Penn-Fudan Database for Pedestrian Detection and Segmentation](https://www.cis.upenn.edu/~jshi/ped_html/)
