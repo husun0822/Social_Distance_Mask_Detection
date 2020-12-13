@@ -18,6 +18,160 @@ from torchvision import models
 from torchvision.transforms import Compose, Resize, ToPILImage, ToTensor, CenterCrop, Normalize
 
 
+def draw_circle(img_c,person,person_scale,H,circle_cen,radius,person_real_dis):
+    """
+    Inputs:
+      person_pos: ndarray, person.pos
+      person_scale: double
+      H: np.array(3,3), homography matrix 
+      circle_cen: (2,),circle's center coordinates
+      radius: double, circle radius
+    """
+    img_c = img_c.copy()
+    person_box = person.box.astype(np.int)
+    person_pos = person.pos
+    person_mask = person.mask
+    (height,width) = person_mask.shape
+
+
+    num_points = 500
+    points_on_circle = np.zeros((3,num_points))
+
+    x_cen = circle_cen[0]
+    y_cen = circle_cen[1]
+    i = 0
+    for theta in np.linspace(0, 2*pi, num_points):
+      points_on_circle[0,i] = x_cen + radius * cos(theta)
+      points_on_circle[1,i] = y_cen - radius * sin(theta)
+      points_on_circle[2,i] = 1.0
+      i = i+1
+    points_on_ellipse = H @ points_on_circle
+
+    points_on_ellipse /= points_on_ellipse[2,:]
+
+    #we need to give new_center_point(based on the people's foot location) and the new_scale(based on the people's height)
+    new_cen_ellipse = np.array([[person_pos[0]],[person_pos[1]]])
+    new_scale = person_scale
+
+    #center point of ellipse
+    cen_ellipse = H@np.array([[x_cen],[y_cen], [1]])
+    cen_ellipse /= cen_ellipse[2,0]
+
+    #H2 is a scale matrix 
+    H2 = np.array([[new_scale,0,0],[0,new_scale,0],[0,0,1]])
+    points_on_ellipse[:2,:] = points_on_ellipse[:2,:]-cen_ellipse[:2,:] #scale based on center point
+    scale_ellipse = H2 @ points_on_ellipse
+    scale_ellipse /= scale_ellipse[2,:]
+    #do the translation
+    pts = scale_ellipse[:2,:] + new_cen_ellipse #to new center
+    
+    #draw the new ellipse
+    color  = 1 #green
+    for dis in person_real_dis:
+      if (dis < 160 and dis>0): # distance_threhold = 2*person_scale_factor * radius = 2*1.0*200 =400(pixel),if we want to change the threhold,we change person_scale_factor.
+        color = 0 #red
+
+    for i in range(num_points):
+      pt = pts[:,i]
+      x = int(pt[0])
+      y = int(pt[1])
+
+      if(x>person_box[0] and x<person_box[2] and y >person_box[1] and y<person_box[3] and person_mask[y,x]>0.7):#x>person_box[0] and x<person_box[2] and y >person_box[1] and y<person_box[3] and 
+        pass#in mask, not draw the point
+      else:
+        if (color):
+          img_c = cv.circle(img_c, (x,y), radius=3, color=(0, 255, 0), thickness=-1)#green
+        else:
+          img_c = cv.circle(img_c, (x,y), radius=3, color=(255, 0, 0), thickness=-1)#red
+    return img_c
+  
+
+def prepare_read_and_write(in_file, out_file, fps=20.0):
+    cap = cv.VideoCapture(in_file)
+    fourcc = cv.VideoWriter_fourcc(*"XVID")
+    fr_size = (int(cap.get(cv.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv.CAP_PROP_FRAME_HEIGHT)))
+    out = cv.VideoWriter(out_file, fourcc, float(fps), fr_size)
+    
+    return cap, out
+
+  
+def demo(frame: Frame):
+  print("All arrays are np.ndarray.")
+  print("Boxes are denoted as [x1, y1, x2, y2] where (x1, y1) is the top left corner, ", end="")
+  print("and (x2, y2) is the bottom right corner. x axis is horizontal and y axis is vertical.")
+  people = frame.people
+  img = frame.frame
+  fig, axis = plt.subplots(figsize=(10.8, 4.8))
+  axis.imshow(img)
+  axis.set_title("input frame")
+  plt.show()
+  img_out = frame.frame_out
+  fig, axis = plt.subplots(figsize=(10.8, 4.8))
+  axis.imshow(img_out)
+  axis.set_title("output frame")
+  plt.show()
+  for person in people:
+    fig, axis = plt.subplots(figsize=(10.8, 4.8))
+    handle = axis.imshow(person.mask, cmap="gray")
+    plt.colorbar(handle)
+    axis.set_title("mask")
+    plt.show()
+    print(f"box and position: {person.box}\n{person.pos}")
+    print(f"face location in the entire frame: {person.face_loc}")
+    print(f"human detection score: {person.score}")
+    print(f"mask detection score: {person.prob_mask}")
+    # print(f"face detection score: {person.prob}")
+    
+    
+def run(in_file, out_file, fps=24.0):
+  cap, out = prepare_read_and_write(in_file, out_file)
+  # mask_score = []
+  # face_proportion = []
+  with torch.no_grad():
+    ind = 0
+    people_cnt = 0
+    while cap.isOpened():
+      ind += 1
+      ret, fr = cap.read()
+      if ind > 400 and ind < 800:
+        continue
+     
+      if ret:
+        if ((ind > 0 and ind<400 )or(ind>800) ):
+          # print(f"ind: {ind}")
+          fr_orig = cv.cvtColor(fr, cv.COLOR_BGR2RGB)
+          fr = cv.cvtColor(fr, cv.COLOR_BGR2RGB).astype(np.float32) / 255
+          fr_size = fr.shape[:2]
+
+          try:
+            frame = Frame(fr, None, model_detect, model_face, 0.2, frame_orig=fr_orig)
+            frame.detect_people(True)
+
+            fr_out = frame.frame_out
+            if ind % 50 == 0:
+              print(f"current frame: {ind}/{int(cap.get(cv.CAP_PROP_FRAME_COUNT))}")
+              plt.imshow(fr_out)
+              plt.show()
+
+            out.write(cv.cvtColor((fr_out * 255).astype(np.uint8), cv.COLOR_RGB2BGR))
+
+
+          except Exception as e:
+            # raise ValueError
+            print(e)
+  
+      else:
+        break
+
+     # if ind == 10:
+       # break
+  
+  cap.release()
+  out.release()
+
+  return frame
+
+
 class Person(object):
   def __init__(self, box, mask, frame, score, label, model_face, 
                model_mtcnn=model_face_mtcnn, model_mask=[model_mask_1,model_mask_2], frame_orig=None):
